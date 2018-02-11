@@ -9,7 +9,6 @@ using namespace std;
 
 void loop(RenderWindow &window);
 
-
 int main() {
     //Creamos una ventana (640x480) 550 394
     RenderWindow window(sf::VideoMode(550, 394), "P0. Fundamentos de los Videojuegos. DCCIA");
