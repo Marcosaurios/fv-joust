@@ -19,6 +19,7 @@ int main() {
     return 0;
 }
 
+
 void loop(RenderWindow &window)
 {
     // Velocity vector
