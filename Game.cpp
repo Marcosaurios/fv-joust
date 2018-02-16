@@ -158,8 +158,9 @@ void Game::run()
     Vector2f pos0 = sprite.getPosition();
     Vector2f pos1 = {0,0};
     
-    bool choca_x = false;
-    bool choca_y = false;
+    bool hit_x = false;
+    bool hit_y_up = false;    //
+    bool hit_y_down = false;
     
     while (window.isOpen())
     {
@@ -167,28 +168,46 @@ void Game::run()
         ct = clock.getElapsedTime();
         float dt = ct.asSeconds() - pt.asSeconds();
         
+        
+        
+        // =====>>> function (&sprite)
+        // Infinity map
+        if(sprite.getPosition().x>window.getSize().x)
+        {
+            sprite.setPosition(0,sprite.getPosition().y);
+        }
+        else if(sprite.getPosition().x<0)
+        {
+            sprite.setPosition(window.getSize().x,sprite.getPosition().y);
+        }
+        
+        
         // COLISIONS
         
         
         // collide with rect6 
         if(sprite.getGlobalBounds().intersects(rect6.getGlobalBounds()))
         {
-            // from LEFT
-            cout << "Sprite: " << sprite.getPosition().x << ", " <<  sprite.getPosition().y << endl; 
-            if(sprite.getPosition().x <= rect6.getPosition().x)
+            // from LEFT face
+            if(sprite.getPosition().x <= rect6.getPosition().x && !isJumping)
             {
-                cout << "choca" << endl;
                 speed.x=0;
                 sprite.setPosition(sprite.getPosition().x-sprite.getGlobalBounds().width/2,sprite.getPosition().y);
-                choca_x = true;
+                hit_x = true;
             }
-            // from UP
+            // from UPPER face
             if(sprite.getPosition().y <= rect6.getPosition().y)
             {
                 sprite.setPosition(sprite.getPosition().x,rect6.getPosition().y-rect6.getGlobalBounds().height/2);
                 speed.y=0;
-                choca_y = true;
+                hit_y_up = true;
             } 
+            // from LOWER face
+            /*
+            if(sprite.getPosition().y <= rect6.getPosition().y)
+            {
+                sprite.setPosition(sprite.getPosition().x,rect6.getPosition().y+rect6.getGlobalBounds().height/2);
+            }*/
         }
         
         //Bucle de obtención de eventos
@@ -200,22 +219,20 @@ void Game::run()
            
             if (Keyboard::isKeyPressed(Keyboard::Right))
             {
-                if(state==0 && !choca_x) // walks
+                if(state==0 && !hit_x) // walks and didn't hit any object in X axis
                 {
-                    //sprite.move(5,0);
-                    speed={0.03,0};
+                    speed={0.015,0};
                 }
                 
             }
             if (Keyboard::isKeyPressed(Keyboard::Left))
             {
-                if(state==0 && !choca_x) // walks
+                if(state==0 && !hit_x) // walks and didn't hit any object in X axis
                 {
-                    //sprite.move(-5,0);
-                    speed={-0.03,0};
+                    speed={-0.015,0};
                 }
             }
-            if (Keyboard::isKeyPressed(Keyboard::LControl) && !choca_y)
+            if (Keyboard::isKeyPressed(Keyboard::LControl) && !hit_y_up)
             {
                 // ADD jump
                 speed.y=-0.05;
@@ -246,8 +263,8 @@ void Game::run()
         }
         
         sprite.move(speed);
-        choca_x = false;
-        choca_y = false;
+        hit_x = false;
+        hit_y_up = false;
         // Base surface collision
         if(sprite.getPosition().y+sprite.getGlobalBounds().height/2>base.getPosition().y)
         {
@@ -257,24 +274,25 @@ void Game::run()
         
         
         // Check pixels position to change sprites while walks
-        pos1 = sprite.getPosition();
-        if(pos1.x-pos0.x > 0)
-        {
-            // if moves to the RIGHT 
-            if(count_spw == 4)count_spw = 0;
-            sprite.setTextureRect(SP_walk.at(count_spw));
-            sprite.setScale(1,1);
-            count_spw++;
-        }
-        else if(pos1.x - pos0.x < 0)
-        {
-            // if moves to the LEFT
-            if(count_spw == 4)count_spw = 0;
-            sprite.setTextureRect(SP_walk.at(count_spw));
-            sprite.setScale(-1,1);
-            count_spw++;
-        }
-        pos0 = pos1;
+           pos1 = sprite.getPosition();
+            if(pos1.x-pos0.x > 0)
+            {
+                // if moves to the RIGHT 
+                if(count_spw == 4)count_spw = 0;
+                sprite.setTextureRect(SP_walk.at(count_spw));
+                sprite.setScale(1,1);
+                count_spw++;
+            }
+            else if(pos1.x - pos0.x < 0)
+            {
+                // if moves to the LEFT
+                if(count_spw == 4)count_spw = 0;
+                sprite.setTextureRect(SP_walk.at(count_spw));
+                sprite.setScale(-1,1);
+                count_spw++;
+            }
+            pos0 = pos1;   
+        
         
         window.clear();
         
