@@ -1,0 +1,40 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/* 
+ * File:   Game.h
+ * Author: marcos
+ *
+ * Created on 13 de febrero de 2018, 17:14
+ */
+
+#ifndef GAME_H
+#define GAME_H
+
+using namespace std;
+using namespace sf;
+
+class Game {
+public:
+    Game(int w, int h, string t);
+    Game(const Game& orig);
+    virtual ~Game();
+    void run();
+private:
+    int height;
+    int width;
+    string title;
+    vector<IntRect> SP_walk;
+    vector<IntRect> SP_fly;
+    vector<IntRect> SE_walk;
+    vector<IntRect> SE_fly;
+    vector<IntRect> boss;
+    
+
+};
+
+#endif /* GAME_H */
+
