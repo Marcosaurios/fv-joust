@@ -23,6 +23,8 @@ public:
     Game(const Game& orig);
     virtual ~Game();
     void run();
+    bool collision(Sprite& sprite, RectangleShape& rectangle, bool& hit_x, bool& isJumping, bool& tierra, Vector2f& speed);
+    void inScreen(Sprite& sprite, RenderWindow& window);
 private:
     int height;
     int width;
