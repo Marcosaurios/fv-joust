@@ -14,14 +14,29 @@
 #include <vector> // Storing sprites
 #include <SFML/Graphics.hpp>
 #include "Game.h"
+#include "Enemy.h"
 
-#define kVel 0.03
-#define jump 0.085
+#define kVel 0.018
+#define jump 0.04
 #define gravity 0.2
 
 using namespace sf;
 using namespace std;
 
+struct nivel{
+    int round = 0;
+    int enemies = 0;
+    int killed = 0;
+    int tdelay = 0; /* seconds */
+    
+    nivel(int r, int e, int k, int t){
+        round = r;
+        enemies = e;
+        killed = k;
+        tdelay = t;
+    }
+    
+};
 
 
 Game::Game(int w, int h, string t) {
@@ -29,6 +44,8 @@ Game::Game(int w, int h, string t) {
     height = h;
     title = t;
 }
+
+
 
 Game::Game(const Game& orig) {
 }
@@ -75,15 +92,27 @@ bool Game::collision(Sprite& sprite, RectangleShape& rect6, bool& hit_x, bool& i
     return x;
 }
 
-void Game::inScreen(Sprite& sprite, RenderWindow& window)
+void Game::inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed )
 {
     if(sprite.getPosition().x>window.getSize().x)
     {
+        
+        cout << "Se pira " << window.getPosition().x << "," << window.getPosition().y << endl;
+        cout << "Pos del puto " << sprite.getPosition().x << " , " << endl;
+        // If sprite goes right
         sprite.setPosition(0,sprite.getPosition().y);
     }
     else if(sprite.getPosition().x<0)
     {
+        // If sprite goes left
         sprite.setPosition(window.getSize().x,sprite.getPosition().y);
+    }
+    else if(sprite.getPosition().y<0)
+    {
+        // If sprite goes up
+        speed.y *= -1;
+        sprite.setPosition(sprite.getPosition().x,sprite.getPosition().y+sprite.getGlobalBounds().height);
+        
     }
 }
 
@@ -156,6 +185,8 @@ void Game::run()
         exit(0);
     }
     
+    // ======= Main player sprite =======
+    
     //Y creo el spritesheet a partir de la imagen anterior
     Sprite sprite(tex_ini);
     //Cojo el sprite que me interesa por defecto del sheet
@@ -165,6 +196,16 @@ void Game::run()
     // Lo dispongo en el centro de la pantalla
     sprite.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
     
+    
+    // ======= Enemy sprite =======
+    int index = 0;
+    Sprite enemy(tex_ini);
+    enemy.setTextureRect(SE_fly.at(index));
+    enemy.setOrigin({enemy.getGlobalBounds().width/2,enemy.getGlobalBounds().height/2});
+    enemy.setPosition(0,120);
+    
+    Vector2f enemyspeed = {0.01,0.01};
+    Clock enemychange;
     
     // Background setting:
     Texture bg;
@@ -198,14 +239,41 @@ void Game::run()
      * 3. Repeat
      */
     
+    /* Round values */
+    int points = 0;
+    bool endround = false;
+    bool win = false;
     
+    /* Loading round settings */
+    nivel nivel0(0 /* round */, 5 /* enemies */, 0 /* killed */, 4/* time delay */);
+    nivel nivel1(1,10,0,2);
     
-     //COLISIONES
+    /* round 0 */
+    vector<Enemy> v_enemies_0;
+    /* fill enemies vector */
+        for(int i=0;i<nivel0.enemies;i++){
+        
+        }
+    vector<Enemy> v_enemies_1;
+      //Y creo el spritesheet a partir de la imagen anterior
+    Sprite sprite_enemy(tex_ini);/*
+    //Cojo el sprite que me interesa por defecto del sheet
+    sprite_enemy.setTextureRect(sf::IntRect(8, 35, 16, 20));
+    //Le pongo el centroide donde corresponde
+    sprite_enemy.setOrigin({sprite.getGlobalBounds().width/2,sprite.getGlobalBounds().height/2});
+    // Lo dispongo en el centro de la pantalla
+    sprite_enemy.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
+    
+    */
+    
+     //COLISIONS
     
     Vector2f pos0 = sprite.getPosition();
     Vector2f pos1 = {0,0};    
     bool hit_x = false;    
     bool tierra = false;
+    
+    
     
     while (window.isOpen())
     {
@@ -214,8 +282,13 @@ void Game::run()
         ct = clock.getElapsedTime();
         float dt = ct.asSeconds() - pt.asSeconds();
         
+        
+       
+        
         // Check if player is inside the window
-        inScreen(sprite,window);
+        inScreen(sprite,window,speed);
+        
+        inScreen(enemy,window,enemyspeed);
         
         // COLISIONS
         bool crec1 = collision(sprite,rect1,hit_x,isJumping,tierra,speed);
@@ -238,6 +311,28 @@ void Game::run()
         else if( !(crec1 || crec2 || crec3 || crec4 || crec5 || crec6 || crec7) && !tierra)
         {
             isJumping = true;
+        }
+        
+        // collide with enemies
+        
+       // Enemy ene('n');
+        //cout << ene.devolver() << endl;
+        Vector2f sp={0,1};
+        Vector2f v={50,50};
+        Enemy ene(sp,enemyspeed,sprite_enemy);
+        ene.changeSprite(SE_fly.at(0));
+    
+        
+        // enemy sprites
+        
+        if(enemychange.getElapsedTime().asSeconds()>1.5)
+        {
+            cout << "Reinicia reloj." << endl;
+            enemychange.restart();
+            index++;
+            if(index>=2)index=0;
+            enemy.setTextureRect(SE_fly.at(index));
+            enemyspeed.y *= -1;
             
         }
         
@@ -267,7 +362,7 @@ void Game::run()
                 speed.y=-jump;
                 isJumping = true;
                 tierra = false;
-                sprite.setTextureRect(SP_fly.at(0));
+                sprite.setTextureRect(SP_fly.at(1));
             }
             
             switch (event.type) {
@@ -276,16 +371,17 @@ void Game::run()
                     break;
                 case sf::Event::KeyPressed:
                     switch (event.key.code) {
-                        case sf::Keyboard::Escape:
+                        case sf::Keyboard::Q:
                             window.close();
                             break;
                         default:
                             std::cout << event.key.code << std::endl;
                             break;
+                            
                     }
             }
         }
-         //jump
+        //jump
         if(isJumping)
         {
             // if is FLYING -> ADD gravity
@@ -295,6 +391,8 @@ void Game::run()
         
         sprite.move(speed);
         hit_x = false;
+        
+        enemy.move(enemyspeed);
         
         
         // Check pixels position to change sprites while walks
@@ -346,7 +444,11 @@ void Game::run()
         window.draw(rect6);
         window.draw(rect7);
         window.draw(base);
+        
+        window.draw(enemy);
     
+        window.draw(ene.getSprite());
+        
         window.display();
     }
 
