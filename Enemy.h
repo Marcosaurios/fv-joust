@@ -27,12 +27,13 @@ public:
     Sprite *sp;
     
     
-    Enemy(Vector2f p, Vector2f v, Sprite s);
+    Enemy(Vector2f p, Vector2f v, Sprite &s);
     Enemy(const Enemy& orig);
     virtual ~Enemy();
     Sprite getSprite();
     void changeSprite(IntRect a);
-    
+    void setLive(bool a);
+    void setMove(Vector2f v);
 private:
 
 };

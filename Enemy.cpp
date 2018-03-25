@@ -17,19 +17,19 @@
 using namespace std;
 using namespace sf;
 
-Enemy::Enemy(Vector2f p, Vector2f v, Sprite s) {
+Enemy::Enemy(Vector2f p, Vector2f v, Sprite &s) {
     pos = p;
     vel = v;
-    sp=&s;
+    sp = &s;
     
     sp->setTextureRect(sf::IntRect(8, 35, 16, 20));
     //Le pongo el centroide donde corresponde
     sp->setOrigin({0,0});
-    // Lo dispongo en el centro de la pantalla
-    sp->setPosition(p.x, p.y);
+    sp->setPosition(pos.x, pos.y);
     
-    sp->move(v);
-    cout << "Posicion (x,y): " << v.x <<", " <<v.y << endl;
+    //sp->move(vel);
+    //cout << "Posicion (x,y): " << v.x <<", " <<v.y << endl;
+
     
 }
 
@@ -45,5 +45,10 @@ Sprite Enemy::getSprite() {
 
 void Enemy::changeSprite(IntRect a){
     sp->setTextureRect(a);
+}
+
+void Enemy::setMove(Vector2f v){
+    vel = v;
+    sp->move(vel);
 }
 

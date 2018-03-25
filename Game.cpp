@@ -13,8 +13,9 @@
 #include <iostream>
 #include <vector> // Storing sprites
 #include <SFML/Graphics.hpp>
-#include "Game.h"
 #include "Enemy.h"
+#include "Game.h"
+#include <fstream>
 
 #define kVel 0.018
 #define jump 0.04
@@ -97,8 +98,8 @@ void Game::inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed )
     if(sprite.getPosition().x>window.getSize().x)
     {
         
-        cout << "Se pira " << window.getPosition().x << "," << window.getPosition().y << endl;
-        cout << "Pos del puto " << sprite.getPosition().x << " , " << endl;
+       // cout << "Se pira " << window.getPosition().x << "," << window.getPosition().y << endl;
+       // cout << "Pos del puto " << sprite.getPosition().x << " , " << endl;
         // If sprite goes right
         sprite.setPosition(0,sprite.getPosition().y);
     }
@@ -114,6 +115,15 @@ void Game::inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed )
         sprite.setPosition(sprite.getPosition().x,sprite.getPosition().y+sprite.getGlobalBounds().height);
         
     }
+}
+
+void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
+    for(int i=0; i<v1.size();i++){
+        Vector2f speed = v1.at(i)->vel;
+        v1.at(i)->setMove(speed);
+        //cout << "Bicho "<< i << " vel: "<< v1.at(i)->vel.x << ", " << v1.at(i)->vel.y << endl;
+    }
+    //cout << "----" << endl;
 }
 
 void Game::run()
@@ -249,12 +259,30 @@ void Game::run()
     nivel nivel1(1,10,0,2);
     
     /* round 0 */
-    vector<Enemy> v_enemies_0;
+    vector<Enemy*> v_enemies_0;
+    Vector2f enepos1 = {1,10};
+    Vector2f enesp1 = {0,10};
+
     /* fill enemies vector */
-        for(int i=0;i<nivel0.enemies;i++){
-        
+        for(int i=0;i<nivel0.enemies;i++)
+        {
+        Sprite enemysp(tex_ini);
+            Enemy* ene = new Enemy(enepos1, enesp1, enemysp);
+            ene->setMove({0.01,-0.02});
+            v_enemies_0.push_back(ene);
+            
+            //cout << " &enemy sprite: " << &enemy << endl;
+            //cout << " &v_enemies_0." << i << " sprite: " << v_enemies_0.at(i)->sp << endl << endl;
+
+            enepos1.x += enepos1.x*2;
+            enepos1.y += enepos1.y*2;
         }
-    vector<Enemy> v_enemies_1;
+        
+    //cout << " &enemy sprite: " << &enemy << endl;
+
+    //cout << " &v_enemies_0.0 sprite: " << v_enemies_0.at(0)->sp << endl << endl;
+
+    vector<Enemy*> v_enemies_1;
       //Y creo el spritesheet a partir de la imagen anterior
     Sprite sprite_enemy(tex_ini);/*
     //Cojo el sprite que me interesa por defecto del sheet
@@ -273,22 +301,28 @@ void Game::run()
     bool hit_x = false;    
     bool tierra = false;
     
-    
+    Clock c1; // tiempo de 5s para los mensajes de error y tal
     
     while (window.isOpen())
     {
+        
         // Jump time stuff
         pt = ct;
         ct = clock.getElapsedTime();
         float dt = ct.asSeconds() - pt.asSeconds();
         
         
-       
-        
         // Check if player is inside the window
         inScreen(sprite,window,speed);
         
+        for(int i=0; i<v_enemies_0.size();i++)
+        {
+            inScreen(*v_enemies_0.at(0)->sp,window,v_enemies_0.at(0)->vel);
+        }
+        
         inScreen(enemy,window,enemyspeed);
+        
+        moveEnemies(v_enemies_0,v_enemies_1);
         
         // COLISIONS
         bool crec1 = collision(sprite,rect1,hit_x,isJumping,tierra,speed);
@@ -327,7 +361,7 @@ void Game::run()
         
         if(enemychange.getElapsedTime().asSeconds()>1.5)
         {
-            cout << "Reinicia reloj." << endl;
+            //cout << "Reinicia reloj." << endl;
             enemychange.restart();
             index++;
             if(index>=2)index=0;
@@ -430,6 +464,21 @@ void Game::run()
         }
         pos0 = pos1;   
         
+        float s5 = c1.getElapsedTime().asSeconds();
+        if(s5>5){
+            if(v_enemies_0.empty()){
+                cout << "vacio" << endl;
+            }
+            else{
+            cout << "n0: " << v_enemies_0.at(0)->sp << endl;
+            cout << "n1: " << v_enemies_0.at(1)->sp << endl;
+            cout << "n2: " << v_enemies_0.at(2)->sp << endl;
+            cout << "n3: " << v_enemies_0.at(3)->sp << endl;
+            cout << endl;
+            }
+            c1.restart();
+        }
+        
         
         
         window.clear();
@@ -446,8 +495,28 @@ void Game::run()
         window.draw(base);
         
         window.draw(enemy);
-    
-        window.draw(ene.getSprite());
+        
+        /*
+        for(int a=0;a<v_enemies_0.size();a++){
+            //Enemy* n = v_enemies_0.at(a);
+            //n->getSprite();
+            cout << "A render: " << v_enemies_0.at(a)->pos.x << ", " << v_enemies_0.at(a)->pos.y << endl;
+            v_enemies_0.at(3)->changeSprite(SE_fly.at(0));
+            v_enemies_0.at(2)->changeSprite(SE_fly.at(1));
+            v_enemies_0.at(1)->changeSprite(SE_walk.at(2));
+
+
+            window.draw(v_enemies_0.at(a)->getSprite());
+            cout << "Rendeer " << a << endl;
+        }*/
+                   window.draw(v_enemies_0.at(0)->getSprite());
+           window.draw(v_enemies_0.at(1)->getSprite());
+            window.draw(v_enemies_0.at(2)->getSprite());
+           window.draw(v_enemies_0.at(3)->getSprite());
+           window.draw(v_enemies_0.at(4)->getSprite());
+
+
+        //window.draw(ene.getSprite());
         
         window.display();
     }
