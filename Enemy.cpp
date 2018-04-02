@@ -17,19 +17,19 @@
 using namespace std;
 using namespace sf;
 
-Enemy::Enemy(Vector2f p, Vector2f v, Sprite &s) {
+Enemy::Enemy(Vector2f p, Vector2f v, Texture &text, IntRect init) {
     pos = p;
     vel = v;
-    sp = &s;
     
-    sp->setTextureRect(sf::IntRect(8, 35, 16, 20));
-    //Le pongo el centroide donde corresponde
-    sp->setOrigin({0,0});
-    sp->setPosition(pos.x, pos.y);
-    
-    //sp->move(vel);
-    //cout << "Posicion (x,y): " << v.x <<", " <<v.y << endl;
+    Sprite* a = new Sprite(text);
+    a->setTextureRect(init);
+    a->setOrigin({a->getGlobalBounds().width/2,a->getGlobalBounds().height/2});
+    a->setPosition(pos.x, pos.y);
 
+    cout << "Sprite &sp: " << &sp << endl;
+    cout << "pos " << p.x << ", " << p.y << endl;
+    sp = a;
+    sp->move(vel);
     
 }
 

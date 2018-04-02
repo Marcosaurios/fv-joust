@@ -27,7 +27,7 @@ public:
     Sprite *sp;
     
     
-    Enemy(Vector2f p, Vector2f v, Sprite &s);
+    Enemy(Vector2f p, Vector2f v, Texture &text, IntRect init);
     Enemy(const Enemy& orig);
     virtual ~Enemy();
     Sprite getSprite();

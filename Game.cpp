@@ -129,7 +129,7 @@ void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
 void Game::run()
 {
     
-    //Creamos una ventana (640x480) 550 394
+    // Window (640x480) 550 394
     RenderWindow window(sf::VideoMode(width, height), title);
     
     // Vector to store sprites pixel positions
@@ -207,14 +207,6 @@ void Game::run()
     sprite.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
     
     
-    // ======= Enemy sprite =======
-    int index = 0;
-    Sprite enemy(tex_ini);
-    enemy.setTextureRect(SE_fly.at(index));
-    enemy.setOrigin({enemy.getGlobalBounds().width/2,enemy.getGlobalBounds().height/2});
-    enemy.setPosition(0,120);
-    
-    Vector2f enemyspeed = {0.01,0.01};
     Clock enemychange;
     
     // Background setting:
@@ -232,8 +224,6 @@ void Game::run()
     // 1 fly
     int count_spw = 0;
     //int count_spf = 0;
-    int count_sew = 0;
-    int count_sef = 0;
     
     // Jump
     bool isJumping = false;
@@ -261,21 +251,16 @@ void Game::run()
     /* round 0 */
     vector<Enemy*> v_enemies_0;
     Vector2f enepos1 = {1,10};
-    Vector2f enesp1 = {0,10};
+    Vector2f enev1 = {0.01,0.02};
 
     /* fill enemies vector */
         for(int i=0;i<nivel0.enemies;i++)
         {
-        Sprite enemysp(tex_ini);
-            Enemy* ene = new Enemy(enepos1, enesp1, enemysp);
-            ene->setMove({0.01,-0.02});
-            v_enemies_0.push_back(ene);
+            Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
             
-            //cout << " &enemy sprite: " << &enemy << endl;
-            //cout << " &v_enemies_0." << i << " sprite: " << v_enemies_0.at(i)->sp << endl << endl;
-
-            enepos1.x += enepos1.x*2;
-            enepos1.y += enepos1.y*2;
+            v_enemies_0.push_back(ene);
+            //enepos1.x += enepos1.x*2;
+            enepos1.y += enepos1.y+5;
         }
         
     //cout << " &enemy sprite: " << &enemy << endl;
@@ -283,16 +268,6 @@ void Game::run()
     //cout << " &v_enemies_0.0 sprite: " << v_enemies_0.at(0)->sp << endl << endl;
 
     vector<Enemy*> v_enemies_1;
-      //Y creo el spritesheet a partir de la imagen anterior
-    Sprite sprite_enemy(tex_ini);/*
-    //Cojo el sprite que me interesa por defecto del sheet
-    sprite_enemy.setTextureRect(sf::IntRect(8, 35, 16, 20));
-    //Le pongo el centroide donde corresponde
-    sprite_enemy.setOrigin({sprite.getGlobalBounds().width/2,sprite.getGlobalBounds().height/2});
-    // Lo dispongo en el centro de la pantalla
-    sprite_enemy.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
-    
-    */
     
      //COLISIONS
     
@@ -302,6 +277,8 @@ void Game::run()
     bool tierra = false;
     
     Clock c1; // tiempo de 5s para los mensajes de error y tal
+    
+    
     
     while (window.isOpen())
     {
@@ -317,10 +294,11 @@ void Game::run()
         
         for(int i=0; i<v_enemies_0.size();i++)
         {
-            inScreen(*v_enemies_0.at(0)->sp,window,v_enemies_0.at(0)->vel);
+            inScreen(*v_enemies_0.at(i)->sp,window,v_enemies_0.at(i)->vel);
         }
         
-        inScreen(enemy,window,enemyspeed);
+        
+        //inScreen(enemy,window,enemyspeed);
         
         moveEnemies(v_enemies_0,v_enemies_1);
         
@@ -353,22 +331,11 @@ void Game::run()
         //cout << ene.devolver() << endl;
         Vector2f sp={0,1};
         Vector2f v={50,50};
-        Enemy ene(sp,enemyspeed,sprite_enemy);
-        ene.changeSprite(SE_fly.at(0));
+       // Enemy ene(sp,enemyspeed,sprite_enemy);
+        //ene.changeSprite(SE_fly.at(0));
     
         
-        // enemy sprites
         
-        if(enemychange.getElapsedTime().asSeconds()>1.5)
-        {
-            //cout << "Reinicia reloj." << endl;
-            enemychange.restart();
-            index++;
-            if(index>=2)index=0;
-            enemy.setTextureRect(SE_fly.at(index));
-            enemyspeed.y *= -1;
-            
-        }
         
         //Bucle de obtención de eventos
         sf::Event event;
@@ -415,7 +382,10 @@ void Game::run()
                     }
             }
         }
-        //jump
+        
+        //////////////////////////////
+        // JUMP
+        /////////////////////////////
         if(isJumping)
         {
             // if is FLYING -> ADD gravity
@@ -426,9 +396,10 @@ void Game::run()
         sprite.move(speed);
         hit_x = false;
         
-        enemy.move(enemyspeed);
         
-        
+        //////////////////////////////
+        // P1 SPRITE MOVEMENT
+        //////////////////////////////
         // Check pixels position to change sprites while walks
         pos1 = sprite.getPosition();
         if(pos1.x-pos0.x > 0)
@@ -464,6 +435,11 @@ void Game::run()
         }
         pos0 = pos1;   
         
+        
+        
+        ////////////////////////////
+        // TIMERS
+        ////////////////////////////
         float s5 = c1.getElapsedTime().asSeconds();
         if(s5>5){
             if(v_enemies_0.empty()){
@@ -479,10 +455,25 @@ void Game::run()
             c1.restart();
         }
         
+        // enemy sprites
+        if(enemychange.getElapsedTime().asSeconds()>1.5)
+        {
+            for(int i=0; i<v_enemies_0.size();i++)
+            {
+                index++;
+                if(index>=2)index=0;
+                v_enemies_0.at(i)->changeSprite(SE_fly.at(index));
+                v_enemies_0.at(i)->setMove({v_enemies_0.at(i)->vel.x,v_enemies_0.at(i)->vel.y * -1});
+            }
+            enemychange.restart();
+        }
         
         
+        
+        ///////////////////////////////
+        // DRAW
+        //////////////////////////////
         window.clear();
-        
         window.draw(background);
         window.draw(sprite);
         window.draw(rect1);
@@ -494,29 +485,11 @@ void Game::run()
         window.draw(rect7);
         window.draw(base);
         
-        window.draw(enemy);
-        
-        /*
-        for(int a=0;a<v_enemies_0.size();a++){
-            //Enemy* n = v_enemies_0.at(a);
-            //n->getSprite();
-            cout << "A render: " << v_enemies_0.at(a)->pos.x << ", " << v_enemies_0.at(a)->pos.y << endl;
-            v_enemies_0.at(3)->changeSprite(SE_fly.at(0));
-            v_enemies_0.at(2)->changeSprite(SE_fly.at(1));
-            v_enemies_0.at(1)->changeSprite(SE_walk.at(2));
-
-
-            window.draw(v_enemies_0.at(a)->getSprite());
-            cout << "Rendeer " << a << endl;
-        }*/
-                   window.draw(v_enemies_0.at(0)->getSprite());
-           window.draw(v_enemies_0.at(1)->getSprite());
-            window.draw(v_enemies_0.at(2)->getSprite());
-           window.draw(v_enemies_0.at(3)->getSprite());
-           window.draw(v_enemies_0.at(4)->getSprite());
-
-
-        //window.draw(ene.getSprite());
+       
+        for(int i=0;i<v_enemies_0.size();i++)
+        {
+            window.draw(v_enemies_0.at(i)->getSprite());
+        }
         
         window.display();
     }

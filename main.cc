@@ -38,9 +38,11 @@ int main() {
     cout << "*b=a: &b " << &b << endl;
     cout << endl;
     */
+    
     Game Joust(550,394,"P0_Joust_MarcosUrios");
     
     Joust.run();
+    
     
     return 0;
 }
