@@ -34,6 +34,8 @@ public:
     void changeSprite(IntRect a);
     void setLive(bool a);
     void setMove(Vector2f v);
+    void setPosition(Vector2f p);
+    Vector2f getVel();
 private:
 
 };

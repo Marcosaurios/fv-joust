@@ -26,11 +26,7 @@ Enemy::Enemy(Vector2f p, Vector2f v, Texture &text, IntRect init) {
     a->setOrigin({a->getGlobalBounds().width/2,a->getGlobalBounds().height/2});
     a->setPosition(pos.x, pos.y);
 
-    cout << "Sprite &sp: " << &sp << endl;
-    cout << "pos " << p.x << ", " << p.y << endl;
     sp = a;
-    sp->move(vel);
-    
 }
 
 Enemy::Enemy(const Enemy& orig) {
@@ -50,5 +46,15 @@ void Enemy::changeSprite(IntRect a){
 void Enemy::setMove(Vector2f v){
     vel = v;
     sp->move(vel);
+
+}
+
+void Enemy::setPosition(Vector2f p){
+    pos = p;
+    sp->setPosition(pos);
+}
+
+Vector2f Enemy::getVel(){
+    return vel;
 }
 

@@ -30,12 +30,18 @@ struct nivel{
     int killed = 0;
     int tdelay = 0; /* seconds */
     
+    bool win = false;
+    int points = 0;
+    
     nivel(int r, int e, int k, int t){
         round = r;
         enemies = e;
         killed = k;
         tdelay = t;
+        points = 0;
     }
+    
+    
     
 };
 
@@ -98,8 +104,6 @@ void Game::inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed )
     if(sprite.getPosition().x>window.getSize().x)
     {
         
-       // cout << "Se pira " << window.getPosition().x << "," << window.getPosition().y << endl;
-       // cout << "Pos del puto " << sprite.getPosition().x << " , " << endl;
         // If sprite goes right
         sprite.setPosition(0,sprite.getPosition().y);
     }
@@ -121,9 +125,7 @@ void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
     for(int i=0; i<v1.size();i++){
         Vector2f speed = v1.at(i)->vel;
         v1.at(i)->setMove(speed);
-        //cout << "Bicho "<< i << " vel: "<< v1.at(i)->vel.x << ", " << v1.at(i)->vel.y << endl;
     }
-    //cout << "----" << endl;
 }
 
 void Game::run()
@@ -188,12 +190,41 @@ void Game::run()
     base.setPosition({0,344});
     base.setFillColor(Color(255,255,255,0));
     
+    ////////////////////////////////////////
+    // LOADING RESOURCES
+    ////////////////////////////////////////
     
+    // SPRITES
     Texture tex_ini;
     if (!tex_ini.loadFromFile("resources/spritesheet.png")) {
         cerr << "Error cargando la imagen sprites.png";
         exit(0);
     }
+    
+    // BACKGROUND
+    Texture bg;
+    if (!bg.loadFromFile("resources/joust_bg.png")) {
+        cerr << "Background not loaded!";
+    }
+    Sprite background(bg);
+    
+    // FONT
+    sf::Font font;
+    if (!font.loadFromFile("resources/ARCADECLASSIC.TTF"))
+    {
+        cerr << "Font not loaded!!" << endl;
+    }
+    
+    ////////////////////////////
+    // Timers init
+    ////////////////////////////
+    Clock c1; // 5s clock to check enemies etc
+    Clock enemychange; // change enemy flying sprite
+    Clock enemyspawn; // whenever enemy spawns
+    int count = 0;
+    
+    
+    //////////////////////////
     
     // ======= Main player sprite =======
     
@@ -206,17 +237,6 @@ void Game::run()
     // Lo dispongo en el centro de la pantalla
     sprite.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
     
-    
-    Clock enemychange;
-    
-    // Background setting:
-    Texture bg;
-    if (!bg.loadFromFile("resources/joust_bg.png")) {
-        cerr << "Background not loaded!";
-    }
-    Sprite background(bg);
-    
-    //////////////////////////
     
     // Sprites
     int state = 0;
@@ -242,7 +262,7 @@ void Game::run()
     /* Round values */
     int points = 0;
     bool endround = false;
-    bool win = false;
+    //bool win = false;
     
     /* Loading round settings */
     nivel nivel0(0 /* round */, 5 /* enemies */, 0 /* killed */, 4/* time delay */);
@@ -250,22 +270,20 @@ void Game::run()
     
     /* round 0 */
     vector<Enemy*> v_enemies_0;
-    Vector2f enepos1 = {1,10};
-    Vector2f enev1 = {0.01,0.02};
+    vector<bool> shows;
+    Vector2f enepos1 = {-10,10};
+    Vector2f enev1 = {0.0,0.0};
 
     /* fill enemies vector */
-        for(int i=0;i<nivel0.enemies;i++)
-        {
-            Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
-            
-            v_enemies_0.push_back(ene);
-            //enepos1.x += enepos1.x*2;
-            enepos1.y += enepos1.y+5;
-        }
+    for(int i=0;i<nivel0.enemies;i++)
+    {
+        Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
+        v_enemies_0.push_back(ene);
+        int randnumb = rand()%(10-0 + 1) + 0;
+        enepos1.y += enepos1.y+randnumb;
+        shows.push_back(false);
+    }
         
-    //cout << " &enemy sprite: " << &enemy << endl;
-
-    //cout << " &v_enemies_0.0 sprite: " << v_enemies_0.at(0)->sp << endl << endl;
 
     vector<Enemy*> v_enemies_1;
     
@@ -276,10 +294,14 @@ void Game::run()
     bool hit_x = false;    
     bool tierra = false;
     
-    Clock c1; // tiempo de 5s para los mensajes de error y tal
     
-    
-    
+    int index=0;
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    //               GAME LOOP
+    ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+
     while (window.isOpen())
     {
         
@@ -289,20 +311,71 @@ void Game::run()
         float dt = ct.asSeconds() - pt.asSeconds();
         
         
-        // Check if player is inside the window
-        inScreen(sprite,window,speed);
         
-        for(int i=0; i<v_enemies_0.size();i++)
-        {
-            inScreen(*v_enemies_0.at(i)->sp,window,v_enemies_0.at(i)->vel);
+        ////////////////////////////
+        // TIMERS
+        ////////////////////////////
+        // 5s checker
+        float s5 = c1.getElapsedTime().asSeconds();
+        if(s5>5){
+            c1.restart();
+        }
+        
+        ///////////////////////////
+        // Enemy spawner LVL 0
+        ///////////////////////////
+        if(!nivel0.win){
+            // Spawn
+            if(enemyspawn.getElapsedTime().asSeconds()>nivel0.tdelay && count<nivel0.enemies)
+            {
+                float max = 0.03;
+                float min = 0.01;
+                //int randvx = rand()%(max-min + 1) + min;
+                //int randvy = rand()%(max-min + 1) + min;
+                Vector2f velocity = {max, min};
+                v_enemies_0.at(count)->setPosition({v_enemies_0.at(count)->pos.x+15,v_enemies_0.at(count)->pos.y});
+                v_enemies_0.at(count)->setMove(velocity);
+                enemyspawn.restart();
+                cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
+                shows[count] = true;
+                cout << "true shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
+                count++;
+            }
+            // Moves
+            for(int a=0;a<v_enemies_0.size();a++)
+            {
+                // If it can be displayed
+                if(shows[a])
+                {
+                    v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
+                    inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
+                }
+            }
+            // Enemy sprites
+            if(enemychange.getElapsedTime().asSeconds()>1.5)
+            {
+                for(int i=0; i<v_enemies_0.size();i++)
+                {
+                    index++;
+                    if(index>=2)index=0;
+                    v_enemies_0.at(i)->changeSprite(SE_fly.at(index));
+                    v_enemies_0.at(i)->setMove({v_enemies_0.at(i)->vel.x,v_enemies_0.at(i)->vel.y * -1});
+                }
+                enemychange.restart();
+            }
         }
         
         
-        //inScreen(enemy,window,enemyspeed);
         
-        moveEnemies(v_enemies_0,v_enemies_1);
         
+        //////////////////////////////////////
+        // IN SCREEN WINDOW?
+        //////////////////////////////////////
+        inScreen(sprite,window,speed);
+        
+        /////////////////////////////////////
         // COLISIONS
+        /////////////////////////////////////
         bool crec1 = collision(sprite,rect1,hit_x,isJumping,tierra,speed);
         bool crec2 = collision(sprite,rect2,hit_x,isJumping,tierra,speed);
         bool crec3 = collision(sprite,rect3,hit_x,isJumping,tierra,speed);
@@ -326,14 +399,6 @@ void Game::run()
         }
         
         // collide with enemies
-        
-       // Enemy ene('n');
-        //cout << ene.devolver() << endl;
-        Vector2f sp={0,1};
-        Vector2f v={50,50};
-       // Enemy ene(sp,enemyspeed,sprite_enemy);
-        //ene.changeSprite(SE_fly.at(0));
-    
         
         
         
@@ -392,7 +457,7 @@ void Game::run()
             if(dt>0.15f) dt=0.15f;
             speed.y += (gravity * dt);
         }
-        
+        // Colision in X-axis
         sprite.move(speed);
         hit_x = false;
         
@@ -437,37 +502,7 @@ void Game::run()
         
         
         
-        ////////////////////////////
-        // TIMERS
-        ////////////////////////////
-        float s5 = c1.getElapsedTime().asSeconds();
-        if(s5>5){
-            if(v_enemies_0.empty()){
-                cout << "vacio" << endl;
-            }
-            else{
-            cout << "n0: " << v_enemies_0.at(0)->sp << endl;
-            cout << "n1: " << v_enemies_0.at(1)->sp << endl;
-            cout << "n2: " << v_enemies_0.at(2)->sp << endl;
-            cout << "n3: " << v_enemies_0.at(3)->sp << endl;
-            cout << endl;
-            }
-            c1.restart();
-        }
-        
-        // enemy sprites
-        if(enemychange.getElapsedTime().asSeconds()>1.5)
-        {
-            for(int i=0; i<v_enemies_0.size();i++)
-            {
-                index++;
-                if(index>=2)index=0;
-                v_enemies_0.at(i)->changeSprite(SE_fly.at(index));
-                v_enemies_0.at(i)->setMove({v_enemies_0.at(i)->vel.x,v_enemies_0.at(i)->vel.y * -1});
-            }
-            enemychange.restart();
-        }
-        
+       
         
         
         ///////////////////////////////
