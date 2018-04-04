@@ -128,6 +128,17 @@ void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
     }
 }
 
+bool Game::fight(Sprite &sprite, Sprite enemy){
+    bool value = false;
+    
+    if(sprite.getGlobalBounds().intersects(enemy.getGlobalBounds()))
+    {
+        if(sprite.getPosition().y>enemy.getPosition().y) value = true;
+    }
+    
+    return value;
+}
+
 void Game::run()
 {
     
@@ -349,6 +360,34 @@ void Game::run()
                 {
                     v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
                     inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
+                    if(fight(sprite,v_enemies_0.at(a)->getSprite()))
+                    {
+                        Vector2f posSp = sprite.getPosition();
+                        Vector2f posEne = v_enemies_0.at(a)->getSprite().getPosition();
+                        if(posSp.y>posEne.y)
+                        {
+                            cout << "WIN" << endl;
+                            
+                            cout << "Antes DE BORRARLO: " << endl;
+                            for(int a=0;a<v_enemies_0.size();a++)
+                            {
+                                cout << v_enemies_0.at(a) << endl;;
+                            }
+                            
+                            delete v_enemies_0[a];
+                            v_enemies_0.erase(v_enemies_0.begin()+a);
+                            
+                            cout << "DESPUES DE BORRARLO: " << endl;
+                            for(int a=0;a<v_enemies_0.size();a++)
+                            {
+                                cout << v_enemies_0.at(a) << endl;;
+                            }
+                        }
+                        else
+                        {
+                            cout << "Pringao" << endl;
+                        }
+                    }
                 }
             }
             // Enemy sprites
