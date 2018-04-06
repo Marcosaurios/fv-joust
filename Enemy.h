@@ -25,7 +25,7 @@ public:
     Vector2f pos;
     Vector2f vel;
     Sprite *sp;
-    
+    bool visible;
     
     Enemy(Vector2f p, Vector2f v, Texture &text, IntRect init);
     Enemy(const Enemy& orig);

@@ -20,6 +20,7 @@ using namespace sf;
 Enemy::Enemy(Vector2f p, Vector2f v, Texture &text, IntRect init) {
     pos = p;
     vel = v;
+    visible = false;
     
     Sprite* a = new Sprite(text);
     a->setTextureRect(init);
