@@ -16,6 +16,7 @@
 #include "Enemy.h"
 #include "Game.h"
 #include <fstream>
+#include <sstream>
 
 #define kVel 0.018
 #define jump 0.04
@@ -31,14 +32,12 @@ struct nivel{
     int tdelay = 0; /* seconds */
     
     bool win = false;
-    int points = 0;
     
     nivel(int r, int e, int k, int t){
         round = r;
         enemies = e;
         killed = k;
         tdelay = t;
-        points = 0;
     }
     
     
@@ -50,6 +49,7 @@ Game::Game(int w, int h, string t) {
     width = w;
     height = h;
     title = t;
+    die = false;
 }
 
 
@@ -128,16 +128,21 @@ void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
     }
 }
 
-bool Game::fight(Sprite &sprite, Sprite enemy){
+bool Game::fight(Sprite &sprite, Sprite enemy, Clock c){
     bool value = false;
     
     if(sprite.getGlobalBounds().intersects(enemy.getGlobalBounds()))
     {
-        if(sprite.getPosition().y>enemy.getPosition().y) value = true;
+        if(sprite.getPosition().y<enemy.getPosition().y) value = true;
+        else { 
+            die=true;
+            c.restart();
+        }          
     }
     
     return value;
 }
+
 
 void Game::run()
 {
@@ -226,6 +231,25 @@ void Game::run()
         cerr << "Font not loaded!!" << endl;
     }
     
+    //////////////////////////////
+    // Strings generators
+    /////////////////////////////
+    Text score;
+    score.setFont(font);
+    score.setCharacterSize(22);
+    score.setColor(Color::Yellow);
+    score.setPosition(200,345);
+    
+    Text died;
+    died.setFont(font);
+    //died.setOrigin(died.getLocalBounds().width/2,died.getLocalBounds().height/2);
+    died.setCharacterSize(30);
+    died.setColor(Color::Yellow);
+    died.setString("YOU DIED!");
+    died.setPosition(window.getSize().x/2-died.getGlobalBounds().width/2,window.getSize().y/2-died.getGlobalBounds().height/2);
+    cout << "rect: " << died.getLocalBounds().left << ", " << died.getLocalBounds().top << endl; 
+
+    
     ////////////////////////////
     // Timers init
     ////////////////////////////
@@ -233,6 +257,7 @@ void Game::run()
     Clock enemychange; // change enemy flying sprite
     Clock enemyspawn; // whenever enemy spawns
     int count = 0;
+    Clock respawn; // time spawner for P1
     
     
     //////////////////////////
@@ -272,11 +297,13 @@ void Game::run()
     
     /* Round values */
     int points = 0;
-    bool endround = false;
+    // Parse int to str << ostringstream
+    
+    //bool endround = false;
     //bool win = false;
     
     /* Loading round settings */
-    nivel nivel0(0 /* round */, 5 /* enemies */, 0 /* killed */, 4/* time delay */);
+    nivel nivel0(0 /* round */, 5 /* enemies */, 0 /* killed */, 1/* time delay */);
     nivel nivel1(1,10,0,2);
     
     /* round 0 */
@@ -331,6 +358,11 @@ void Game::run()
         if(s5>5){
             c1.restart();
         }
+        // Dies
+        if(respawn.getElapsedTime().asSeconds()>5 && die){ 
+            die=false;
+            respawn.restart();
+        }
         
         ///////////////////////////
         // Enemy spawner LVL 0
@@ -346,10 +378,11 @@ void Game::run()
                 Vector2f velocity = {max, min};
                 v_enemies_0.at(count)->setPosition({v_enemies_0.at(count)->pos.x+15,v_enemies_0.at(count)->pos.y});
                 v_enemies_0.at(count)->setMove(velocity);
-                enemyspawn.restart();
-                cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
+                //cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
                 shows[count] = true;
                 cout << "true shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
+                
+                enemyspawn.restart();
                 count++;
             }
             // Moves
@@ -360,12 +393,12 @@ void Game::run()
                 {
                     v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
                     inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
-                    if(fight(sprite,v_enemies_0.at(a)->getSprite()))
+                    if(fight(sprite,v_enemies_0.at(a)->getSprite(),respawn))
                     {
                         Vector2f posSp = sprite.getPosition();
                         Vector2f posEne = v_enemies_0.at(a)->getSprite().getPosition();
-                        if(posSp.y>posEne.y)
-                        {
+                        //if(posSp.y>posEne.y)
+                        //{
                             cout << "WIN" << endl;
                             
                             cout << "Antes DE BORRARLO: " << endl;
@@ -382,11 +415,9 @@ void Game::run()
                             {
                                 cout << v_enemies_0.at(a) << endl;;
                             }
-                        }
-                        else
-                        {
-                            cout << "Pringao" << endl;
-                        }
+                            points += 500;
+                       // }
+                       
                     }
                 }
             }
@@ -404,6 +435,9 @@ void Game::run()
             }
         }
         
+        ostringstream ss;
+        ss << points;
+        score.setString(ss.str());
         
         
         
@@ -549,7 +583,8 @@ void Game::run()
         //////////////////////////////
         window.clear();
         window.draw(background);
-        window.draw(sprite);
+        if(!die){ window.draw(sprite); /*cout << "VIVE" << endl; */ }
+        else{ window.draw(died); /* cout << "MUERTOOO " << die << endl; */}
         window.draw(rect1);
         window.draw(rect2);
         window.draw(rect3);
@@ -558,11 +593,11 @@ void Game::run()
         window.draw(rect6);
         window.draw(rect7);
         window.draw(base);
-        
+        window.draw(score);
        
         for(int i=0;i<v_enemies_0.size();i++)
         {
-            window.draw(v_enemies_0.at(i)->getSprite());
+            if(shows[i]) window.draw(v_enemies_0.at(i)->getSprite());
         }
         
         window.display();
