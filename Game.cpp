@@ -128,7 +128,7 @@ void Game::moveEnemies(vector<Enemy*> v1, vector<Enemy*> v2){
     }
 }
 
-bool Game::fight(Sprite &sprite, Sprite enemy, Clock c, vector<Sprite*> &v){
+bool Game::fight(Sprite &sprite, Sprite enemy, Clock c){
     bool value = false;
     
     if(sprite.getGlobalBounds().intersects(enemy.getGlobalBounds()))
@@ -259,6 +259,14 @@ void Game::run()
     cout << "rect: " << died.getLocalBounds().left << ", " << died.getLocalBounds().top << endl; 
 
     
+    Text over;
+    over.setFont(font);
+    over.setCharacterSize(35);
+    over.setColor(Color::Yellow);
+    over.setString("GAME OVER!");
+    over.setPosition(window.getSize().x/2-died.getGlobalBounds().width/2,window.getSize().y/2-died.getGlobalBounds().height/2);
+   
+    
     ////////////////////////////
     // Timers init
     ////////////////////////////
@@ -386,19 +394,8 @@ void Game::run()
         if(s5>5){
             c1.restart();
         }
-        // Dies
-        if(respawn.getElapsedTime().asSeconds()>5 && die){ 
-            
-            if(die){
-                int last = lives.size()-1;
-                delete lives.at(last);
-                lives.erase(lives.begin()+last);
-                cout << "lets seeee" << endl;
-            }
-            die=false;
-            
-            respawn.restart();
-        }
+        
+       
         // Scores
         /*if(tscore.getElapsedTime().asSeconds()>0.5){
             // score positioning
@@ -421,7 +418,6 @@ void Game::run()
             }
             
         }*/
-        
         ///////////////////////////
         // Enemy spawner LVL 0
         ///////////////////////////
@@ -452,7 +448,7 @@ void Game::run()
                 {
                     v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
                     inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
-                    if(!die && fight(sprite,v_enemies_0.at(a)->getSprite(),respawn, lives))
+                    if(!die && fight(sprite,v_enemies_0.at(a)->getSprite(),respawn))
                     {
                         Vector2f posSp = sprite.getPosition();
                         Vector2f posEne = v_enemies_0.at(a)->getSprite().getPosition();
@@ -483,6 +479,18 @@ void Game::run()
         ss << points;
         score.setString(ss.str());
         
+        
+        
+        // Dies
+        if(respawn.getElapsedTime().asSeconds()>4 && die && !lives.empty())
+        {     
+            int last = lives.size()-1;
+            delete lives.at(last);
+            lives.erase(lives.begin()+last);
+            cout << "lets seeee" << endl;
+            die=false;
+         respawn.restart();   
+        }
         
         
         //////////////////////////////////////
@@ -624,7 +632,16 @@ void Game::run()
         window.draw(background);
         if(!die){ window.draw(sprite); /*cout << "VIVE" << endl; */ }
         else{ 
-            window.draw(died); 
+            if(lives.empty())
+            {
+                // GAME OVER
+                window.draw(over);
+            }
+            else
+            {
+                // user yet has lives
+                window.draw(died);
+            } 
         }
         window.draw(rect1);
         window.draw(rect2);

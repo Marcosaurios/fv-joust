@@ -26,7 +26,7 @@ public:
     bool collision(Sprite& sprite, RectangleShape& rectangle, bool& hit_x, bool& isJumping, bool& tierra, Vector2f& speed);
     void inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed);
     void moveEnemies(vector <Enemy*> v1, vector <Enemy*> v2);
-    bool fight(Sprite &sprite, Sprite enemy, Clock c, vector<Sprite*> &v);
+    bool fight(Sprite &sprite, Sprite enemy, Clock c);
 private:
     int height;
     int width;
