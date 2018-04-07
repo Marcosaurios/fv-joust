@@ -17,6 +17,8 @@
 #include "Game.h"
 #include <fstream>
 #include <sstream>
+#include <stdio.h>
+#include <string.h>
 
 #define kVel 0.018
 #define jump 0.04
@@ -137,7 +139,8 @@ bool Game::fight(Sprite &sprite, Sprite enemy, Clock c){
         else { 
             die=true;
             c.restart();
-            //v.pop_back(); 
+            cout << "fightea, die: " << die << endl;
+
         }          
     }
     
@@ -150,7 +153,6 @@ void Game::run()
     
     // Window (640x480) 550 394
     RenderWindow window(sf::VideoMode(width, height), title);
-    
     // Vector to store sprites pixel positions
     vector<IntRect> SP_walk;
     vector<IntRect> SP_fly;
@@ -264,9 +266,24 @@ void Game::run()
     over.setCharacterSize(35);
     over.setColor(Color::Yellow);
     over.setString("GAME OVER!");
-    over.setPosition(window.getSize().x/2-died.getGlobalBounds().width/2,window.getSize().y/2-died.getGlobalBounds().height/2);
+    over.setPosition(window.getSize().x/2-over.getGlobalBounds().width/2,window.getSize().y/2-over.getGlobalBounds().height/2);
    
     
+    Text exit;
+    exit.setFont(font);
+    exit.setCharacterSize(20);
+    exit.setColor(Color::Yellow);
+    exit.setString("Please  press  Q  to  exit");
+    exit.setPosition(window.getSize().x/2-exit.getGlobalBounds().width/2,window.getSize().y/2-exit.getGlobalBounds().height/2+28);
+   
+    
+    Text appear;
+    appear.setFont(font);
+    appear.setCharacterSize(20);
+    appear.setColor(Color::Yellow);
+    appear.setString("Respawning in 1 seconds");
+    appear.setPosition(window.getSize().x/2-appear.getGlobalBounds().width/2,window.getSize().y/2-appear.getGlobalBounds().height/2+28);
+   
     ////////////////////////////
     // Timers init
     ////////////////////////////
@@ -276,7 +293,9 @@ void Game::run()
     int count = 0;
     Clock respawn; // time spawner for P1
     Clock tscore; // to move score left each .5s
-    
+    bool onlyone = false;
+    Clock backtimer;
+    int intbacktime = 4;
     
     //////////////////////////
     
@@ -375,10 +394,8 @@ void Game::run()
     //               GAME LOOP
     ////////////////////////////////////////////////////
     ////////////////////////////////////////////////////
-
     while (window.isOpen())
     {
-        
         // Jump time stuff
         pt = ct;
         ct = clock.getElapsedTime();
@@ -391,11 +408,17 @@ void Game::run()
         ////////////////////////////
         // 5s checker
         float s5 = c1.getElapsedTime().asSeconds();
-        if(s5>5){
+        if(s5>0.5){
+            cout << "die: " << die << endl;
+            cout << respawn.getElapsedTime().asSeconds() << endl;
             c1.restart();
         }
+        if(respawn.getElapsedTime().asSeconds()>3 && die && !lives.empty())
+        {
+            die=false;
+        }
         
-       
+        
         // Scores
         /*if(tscore.getElapsedTime().asSeconds()>0.5){
             // score positioning
@@ -448,6 +471,7 @@ void Game::run()
                 {
                     v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
                     inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
+                    
                     if(!die && fight(sprite,v_enemies_0.at(a)->getSprite(),respawn))
                     {
                         Vector2f posSp = sprite.getPosition();
@@ -457,7 +481,6 @@ void Game::run()
                         v_enemies_0.erase(v_enemies_0.begin()+a);
                         
                         points += 500;
-                       
                     }
                 }
             }
@@ -484,11 +507,7 @@ void Game::run()
         // Dies
         if(respawn.getElapsedTime().asSeconds()>4 && die && !lives.empty())
         {     
-            int last = lives.size()-1;
-            delete lives.at(last);
-            lives.erase(lives.begin()+last);
-            cout << "lets seeee" << endl;
-            die=false;
+            
          respawn.restart();   
         }
         
@@ -630,17 +649,57 @@ void Game::run()
         //////////////////////////////
         window.clear();
         window.draw(background);
-        if(!die){ window.draw(sprite); /*cout << "VIVE" << endl; */ }
-        else{ 
+        if(!die)
+        {
+            // ALIVE 
+            window.draw(sprite);
+            onlyone = true;
+            /*cout << "VIVE" << endl; */ 
+        }
+        else
+        { 
             if(lives.empty())
             {
                 // GAME OVER
                 window.draw(over);
+                window.draw(exit);
             }
             else
             {
-                // user yet has lives
+                // YOU DIED ; user lives yet
+                if(onlyone && die)
+                {
+                    int last = lives.size()-1;
+                    delete lives.at(last);
+                    lives.erase(lives.begin()+last);
+                    cout << "lets seeee" << endl;
+                    onlyone = false;
+                    cout << "die: " << die << endl << "onlyone: " << onlyone << endl;
+                    sprite.setPosition(0,0);
+                    //respawn.restart();
+                }
                 window.draw(died);
+                String tpoints = "Respawning in ";
+
+                /*ostringstream pnts;
+                int rounded = int(respawn.getElapsedTime().asSeconds()+0.5);
+                pnts << rounded;*/
+                ostringstream intstr;
+                intstr << intbacktime;
+                tpoints += intstr.str() + " seconds";
+                appear.setString(tpoints);
+                window.draw(appear);
+                cout << intstr.str() << endl;
+                if(backtimer.getElapsedTime().asSeconds()>1)
+                {
+                    --intbacktime;
+                    if(intbacktime==0)
+                    {
+                        intbacktime=3;
+                    }
+                    backtimer.restart();
+
+                }
             } 
         }
         window.draw(rect1);
