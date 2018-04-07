@@ -409,8 +409,8 @@ void Game::run()
         // 5s checker
         float s5 = c1.getElapsedTime().asSeconds();
         if(s5>0.5){
-            cout << "die: " << die << endl;
-            cout << respawn.getElapsedTime().asSeconds() << endl;
+            //cout << "die: " << die << endl;
+            //cout << respawn.getElapsedTime().asSeconds() << endl;
             c1.restart();
         }
         if(respawn.getElapsedTime().asSeconds()>3 && die && !lives.empty())
@@ -458,8 +458,8 @@ void Game::run()
                 //cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
                 v_enemies_0.at(count)->visible = true;
                 //shows[count] = true;
-                cout << "true v_enemies_0[" << count << "]: " << v_enemies_0.at(0)->visible << v_enemies_0.at(1)->visible << v_enemies_0.at(2)->visible  << v_enemies_0.at(3)->visible << v_enemies_0.at(4)->visible << endl;
-                cout << "fin respawn if" << endl;
+                //cout << "true v_enemies_0[" << count << "]: " << v_enemies_0.at(0)->visible << v_enemies_0.at(1)->visible << v_enemies_0.at(2)->visible  << v_enemies_0.at(3)->visible << v_enemies_0.at(4)->visible << endl;
+                //cout << "fin respawn if" << endl;
                 enemyspawn.restart();
                 count++;
             }
@@ -472,7 +472,7 @@ void Game::run()
                     v_enemies_0.at(a)->setMove(v_enemies_0.at(a)->getVel());
                     inScreen(*v_enemies_0.at(a)->sp,window,v_enemies_0.at(a)->vel);
                     
-                    if(!die && fight(sprite,v_enemies_0.at(a)->getSprite(),respawn))
+                    if(!die && fight(sprite,v_enemies_0.at(a)->getSprite(),respawn) && !v_enemies_0.empty())
                     {
                         Vector2f posSp = sprite.getPosition();
                         Vector2f posEne = v_enemies_0.at(a)->getSprite().getPosition();
@@ -481,8 +481,16 @@ void Game::run()
                         v_enemies_0.erase(v_enemies_0.begin()+a);
                         
                         points += 500;
+                        cout << "tamano: " << v_enemies_0.size() << " :: empty?: " << v_enemies_0.empty() << endl;
+                        
                     }
                 }
+            }
+            if(v_enemies_0.empty())
+            {
+                // ROUND 0 FINISHED
+                cout << "round 0 finished " << endl;
+                nivel0.win = true;
             }
             // Enemy sprites
             if(enemychange.getElapsedTime().asSeconds()>1.5)
@@ -497,18 +505,19 @@ void Game::run()
                 enemychange.restart();
             }
         }
+        else if(!nivel1.win)
+        {
+            cout << "nivel 2" << endl;
+        }
         
         ostringstream ss;
         ss << points;
         score.setString(ss.str());
         
-        
-        
         // Dies
         if(respawn.getElapsedTime().asSeconds()>4 && die && !lives.empty())
-        {     
-            
-         respawn.restart();   
+        {   
+            respawn.restart();   
         }
         
         
@@ -672,9 +681,9 @@ void Game::run()
                     int last = lives.size()-1;
                     delete lives.at(last);
                     lives.erase(lives.begin()+last);
-                    cout << "lets seeee" << endl;
+                    //cout << "lets seeee" << endl;
                     onlyone = false;
-                    cout << "die: " << die << endl << "onlyone: " << onlyone << endl;
+                    //cout << "die: " << die << endl << "onlyone: " << onlyone << endl;
                     sprite.setPosition(0,0);
                     //respawn.restart();
                 }
