@@ -27,6 +27,7 @@ public:
     void inScreen(Sprite& sprite, RenderWindow& window, Vector2f speed);
     void moveEnemies(vector <Enemy*> v1, vector <Enemy*> v2);
     bool fight(Sprite &sprite, Sprite enemy, Clock c);
+    float get_random(float a, float b);
 private:
     int height;
     int width;
@@ -37,7 +38,6 @@ private:
     vector<IntRect> SE_fly;
     vector<IntRect> boss;
     bool die;
-    
 
 };
 
