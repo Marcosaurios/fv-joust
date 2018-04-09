@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <random>
+#include <ctime>
+#include <cstdlib>
 
 #define kVel 0.018
 #define jump 0.04
@@ -335,10 +337,26 @@ void Game::run()
     sprite.setOrigin({sprite.getGlobalBounds().width/2,sprite.getGlobalBounds().height/2});
     // Lo dispongo en el centro de la pantalla
     sprite.setPosition(rect5.getPosition().x+rect5.getGlobalBounds().width/2, rect5.getPosition().y);
+    bool firstspawn = false;
     
+    Sprite heart_sp(tex_ini);    
+    heart_sp.setTextureRect(sf::IntRect(30, 14, 16, 13));
+    heart_sp.setPosition(445,200);
+    Sprite heart_sp2(tex_ini);
+    heart_sp2.setTextureRect(sf::IntRect(8, 14, 16, 13));
+    heart_sp2.setPosition(242,119);
     
-    Sprite heart_sp(heart);    
-    heart_sp.setPosition(350,345);
+    // Positions to respawn player
+    // 445,200
+    // 35,215
+    // 248, 323
+    // 242, 119
+    vector<Vector2f> positions;
+    positions.push_back({445,200});
+    positions.push_back({35,215});
+    positions.push_back({248,323});
+    positions.push_back({242,119});
+
     
     // Sprites
     int state = 0;
@@ -353,6 +371,7 @@ void Game::run()
     Clock clock;
     Time ct = clock.getElapsedTime();
     Time pt;
+    bool switcher = false;
     
     /*
      Loop:
@@ -382,38 +401,12 @@ void Game::run()
     vector<Enemy*> v_enemies_0;
     Vector2f enepos1 = {-10,10};
     Vector2f enev1 = {0.0,0.0};
-    /* fill enemies vector */
-    for(int i=0;i<nivel0.enemies;i++)
-    {
-        float v1 = get_random(0.75,2.75);
-        float v2 = get_random(0.75,2.75);
-        enev1 = {v1,v2};
-        
-        // Generates random number for y-axis spawning
-        Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
-        v_enemies_0.push_back(ene);
-        int randnumb = rand()%(10-0 + 300) + 0;
-        enepos1.y = randnumb;
-    }
         
     /////////////////////////////////////
     // ROUND 1 CONFIG
     /////////////////////////////////////
     vector<Enemy*> v_enemies_1;
     Vector2f enepos2 = {-10,10};
-    for(int i=0;i<nivel1.enemies;i++)
-    {
-        // Generates random numbers for speed vector
-        float v1 = get_random(0.75,2.75);
-        float v2 = get_random(0.75,2.75);
-        enev1 = {v1,v2};
-        
-        // Generates random number for y-axis spawning
-        Enemy* ene = new Enemy(enepos2, enev1, tex_ini, SE_fly.at(0));
-        v_enemies_1.push_back(ene);
-        int randnumb = rand()%(10-0 + 300) + 0;
-        enepos2.y = randnumb;
-    }
     
     // LIVES
     int livesX = 283;
@@ -454,17 +447,8 @@ void Game::run()
         // 5s checker
         float s5 = c1.getElapsedTime().asSeconds();
         if(s5>2){
-            //cout << "die: " << die << endl;
-            cout << "Enemy spawn time elapsed: " << enemyspawn.getElapsedTime().asSeconds() << endl;
-            for(int a=0;a<v_enemies_1.size();a++)
-            {
-                cout << "-- enemigo " << a << " -- " << endl;
-                cout << "Pos: " << v_enemies_1.at(a)->pos.x << ", " << v_enemies_1.at(a)->pos.y << endl;
-                cout << "Speed: " << v_enemies_1.at(a)->vel.x << ", " << v_enemies_1.at(a)->vel.y << endl;
-                cout << "&Sprite: " << &v_enemies_1.at(a)->sp << endl;
-                cout << "Visible: " << v_enemies_1.at(a)->visible << endl;
-                
-            }
+            // Debugging messages
+            
             c1.restart();
             
         }
@@ -503,18 +487,24 @@ void Game::run()
             // Spawn
             if(enemyspawn.getElapsedTime().asSeconds()>nivel0.tdelay && count<nivel0.enemies)
             {
+                float v1 = get_random(0.75,2.75);
+                float v2 = get_random(0.75,2.75);
+                enev1 = {v1,v2};
+
+                // Generates random number for y-axis spawning
+                Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
+                int randnumb = rand()%(10-0 + 300) + 0;
+                enepos1.y = randnumb;
+                
                 float max = 0.03;
                 float min = 0.01;
-                //int randvx = rand()%(max-min + 1) + min;
-                //int randvy = rand()%(max-min + 1) + min;
+                
                 Vector2f velocity = {max, min};
-                v_enemies_0.at(count)->setPosition({v_enemies_0.at(count)->pos.x+15,v_enemies_0.at(count)->pos.y});
-                v_enemies_0.at(count)->setMove(velocity);
-                //cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
-                v_enemies_0.at(count)->visible = true;
-                //shows[count] = true;
-                //cout << "true v_enemies_0[" << count << "]: " << v_enemies_0.at(0)->visible << v_enemies_0.at(1)->visible << v_enemies_0.at(2)->visible  << v_enemies_0.at(3)->visible << v_enemies_0.at(4)->visible << endl;
-                //cout << "fin respawn if" << endl;
+                ene->setPosition({ene->pos.x+15,ene->pos.y});
+                ene->setMove(velocity);
+                ene->visible=true;
+                v_enemies_0.push_back(ene);
+
                 enemyspawn.restart();
                 count++;
             }
@@ -536,13 +526,14 @@ void Game::run()
                         v_enemies_0.erase(v_enemies_0.begin()+a);
                         
                         points += 500;
+                        nivel0.killed++;
                         //nivel0.win=true;
                         //cout << "tamano: " << v_enemies_0.size() << " :: empty?: " << v_enemies_0.empty() << endl;
                         
                     }
                 }
             }
-            if(v_enemies_0.empty())
+            if(v_enemies_0.empty() && nivel0.killed == nivel0.enemies)
             {
                 //ROUND 0 FINISHED
                 cout << "round 0 finished " << endl;
@@ -563,56 +554,67 @@ void Game::run()
                 enemychange.restart();
             }
         }
+        ///////////////////////
+        // ENEMY SPAWNER LVL 1
+        ///////////////////////
         else if(nivel0.win && !nivel1.win && loading.getElapsedTime().asSeconds()>5)
         {
-            //cout << "empieza ronda 1" << endl;
             // Spawn
             if(enemyspawn.getElapsedTime().asSeconds()>nivel1.tdelay && count2<nivel1.enemies)
             {
-                //cout << "entro" << endl;
+                float v1 = get_random(0.75,2.75);
+                float v2 = get_random(0.75,2.75);
+                enev1 = {v1,v2};
+
+                // Generates random number for y-axis spawning
+                Enemy* ene = new Enemy(enepos1, enev1, tex_ini, SE_fly.at(0));
+                int randnumb = rand()%(10-0 + 300) + 0;
+                enepos1.y = randnumb;
+                
                 float max = 0.03;
                 float min = 0.01;
-                //int randvx = rand()%(max-min + 1) + min;
-                //int randvy = rand()%(max-min + 1) + min;
+                
                 Vector2f velocity = {max, min};
-                v_enemies_1.at(count2)->setPosition({v_enemies_1.at(count2)->pos.x+15,v_enemies_1.at(count2)->pos.y});
-                v_enemies_1.at(count2)->setMove(velocity);
-                //cout << "pre shows[" << count << "]: " << shows[0] << shows[1] << shows[2] << shows[3] << shows[4] << endl;
-                v_enemies_1.at(count2)->visible = true;
-                //shows[count] = true;
-                //cout << "true v_enemies_0[" << count << "]: " << v_enemies_0.at(0)->visible << v_enemies_0.at(1)->visible << v_enemies_0.at(2)->visible  << v_enemies_0.at(3)->visible << v_enemies_0.at(4)->visible << endl;
-                //cout << "fin respawn if" << endl;
+                ene->setPosition({ene->pos.x+15,ene->pos.y});
+                ene->setMove(velocity);
+                ene->visible=true;
+                v_enemies_1.push_back(ene);
+
                 enemyspawn.restart();
                 count2++;
             }
             // Moves
-            for(int a=0;a<v_enemies_1.size();a++)
+            for(int a=0; !v_enemies_1.empty() && a<v_enemies_1.size();a++)
             {
-                //cout << "aqui tambien gfsafs" << endl;
                 // If it can be displayed
                 if(v_enemies_1.at(a)->visible)
                 {
-                    //cout << v_enemies_1.size()<< endl;
                     v_enemies_1.at(a)->setMove(v_enemies_1.at(a)->getVel());
                     inScreen(*v_enemies_1.at(a)->sp,window,v_enemies_1.at(a)->vel);
                     
                     if(!die && fight(sprite,v_enemies_1.at(a)->getSprite(),respawn) && !v_enemies_1.empty())
                     {
+                        Vector2f posSp = sprite.getPosition();
+                        Vector2f posEne = v_enemies_1.at(a)->getSprite().getPosition();
                         
                         delete v_enemies_1[a];
                         v_enemies_1.erase(v_enemies_1.begin()+a);
                         
                         points += 500;
-                        //cout << "tamano: " << v_enemies_1.size() << " :: empty?: " << v_enemies_1.empty() << endl;
+                        nivel1.killed++;
+                        //nivel0.win=true;
+                        //cout << "tamano: " << v_enemies_0.size() << " :: empty?: " << v_enemies_0.empty() << endl;
                         
                     }
                 }
             }
-            if(v_enemies_1.empty())
+            if(v_enemies_1.empty() && nivel1.killed == nivel1.enemies)
             {
-                // ROUND 1 FINISHED
+                //ROUND 1 FINISHED
                 cout << "round 1 finished " << endl;
                 nivel1.win = true;
+                intbacktime=6;
+                loading.restart();
             }
             // Enemy sprites
             if(enemychange.getElapsedTime().asSeconds()>1.5)
@@ -628,6 +630,7 @@ void Game::run()
             }
         }
         
+        // Score int parser to string
         ostringstream ss;
         ss << points;
         score.setString(ss.str());
@@ -663,7 +666,7 @@ void Game::run()
             tierra = true;
         }
         
-        // collide with surfaces 
+        // Collide with surfaces 
         else if( !(crec1 || crec2 || crec3 || crec4 || crec5 || crec6 || crec7) && !tierra)
         {
             isJumping = true;
@@ -692,11 +695,7 @@ void Game::run()
             }
             if (Keyboard::isKeyPressed(Keyboard::Space) )
             {
-                // ADD jump
-                speed.y=-jump;
-                isJumping = true;
-                tierra = false;
-                sprite.setTextureRect(SP_fly.at(1));
+                
             }
             
             switch (event.type) {
@@ -710,6 +709,16 @@ void Game::run()
                             break;
                         case sf::Keyboard::V:
                             nivel0.win=true;
+                            break;
+                        case sf::Keyboard::Space:
+                            // ADD jump
+                            speed.y=-jump;
+                            isJumping = true;
+                            tierra = false;
+                            cout << switcher << endl;
+                            sprite.setTextureRect(SP_fly.at(switcher));
+                            switcher = !switcher;
+                            break;
                         default:
                             std::cout << event.key.code << std::endl;
                             break;
@@ -742,7 +751,7 @@ void Game::run()
             // if moves to the RIGHT 
             if(isJumping)
             {
-                sprite.setTextureRect(SP_fly.at(0));
+                sprite.setTextureRect(SP_fly.at(switcher));
             }
             else
             {
@@ -758,7 +767,7 @@ void Game::run()
             // if moves to the LEFT
             if(isJumping)
             {
-                sprite.setTextureRect(SP_fly.at(0));
+                sprite.setTextureRect(SP_fly.at(switcher));
             }
             else
             {
@@ -782,8 +791,20 @@ void Game::run()
         {
             // ALIVE 
             window.draw(sprite);
-            onlyone = true;
-            /*cout << "VIVE" << endl; */ 
+            if(!onlyone)
+            {
+                srand(time(0));
+                int min = 0;
+                int max = 3;
+                int randnumb = min + (rand() % static_cast<int>(max - min + 1));
+                cout << positions[randnumb].x << ", " << positions[randnumb].y << endl;
+                sprite.setPosition(positions[randnumb]);
+                cout << "position sprite: " << sprite.getPosition().x << ", " << sprite.getPosition().y << endl;
+                onlyone = true;
+                
+                isJumping = true;
+                tierra = false;
+            }
         }
         else
         { 
@@ -804,7 +825,7 @@ void Game::run()
                     //cout << "lets seeee" << endl;
                     onlyone = false;
                     //cout << "die: " << die << endl << "onlyone: " << onlyone << endl;
-                    sprite.setPosition(0,0);
+                    
                     //respawn.restart();
                 }
                 window.draw(died);
@@ -855,7 +876,10 @@ void Game::run()
         window.draw(rect7);
         window.draw(base);
         window.draw(score);
+        
         //window.draw(heart_sp);
+        //window.draw(heart_sp2);
+
         
         // ---- round 0 stuff -----
         if(!v_enemies_0.empty()){
